@@ -1,3 +1,6 @@
+autogen-core
 autogen-agentchat
-autogen-ext[openai]
-autogen-ext[azure]
+autogen-ext[openai,azure,ollama]
+dotenv
+asyncio
+chainlit
