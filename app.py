@@ -8,12 +8,12 @@ from autogen_agentchat.messages import ModelClientStreamingChunkEvent, TextMessa
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_core import CancellationToken
 from agents import get_agents
-from models import get_model_client   
+from models import get_model_client
 
 @cl.on_chat_start
 async def start_chat():
     # Get model client
-    model_client = get_model_client("phi4_mini")
+    model_client = get_model_client("azure_openai")
 
     # Get agents 
     agents = get_agents(model_client)
