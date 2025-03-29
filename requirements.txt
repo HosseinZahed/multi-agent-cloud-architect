@@ -1,6 +1,4 @@
-autogen-core
-autogen-agentchat
-autogen-ext[openai,azure,ollama]
-dotenv
+semantic-kernel
 asyncio
+dotenv
 chainlit
