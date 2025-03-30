@@ -1,4 +1,7 @@
-semantic-kernel
+autogen-agentchat
+autogen-ext[openai,azure]
 asyncio
 dotenv
 chainlit
+rich
+ipykernel
