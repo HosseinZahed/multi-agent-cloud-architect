@@ -89,8 +89,7 @@ async def set_starts() -> List[cl.Starter]:
 @cl.on_message  # type: ignore
 async def chat(message: cl.Message) -> None:
     # Get the team from the user session.
-    team = cast(RoundRobinGroupChat,
-                cl.user_session.get("team"))  # type: ignore
+    team = cast(RoundRobinGroupChat, cl.user_session.get("team"))  # type: ignore
     # Streaming response message.
     streaming_response: cl.Message | None = None
     # Stream the messages from the team.
@@ -98,20 +97,14 @@ async def chat(message: cl.Message) -> None:
         task=[TextMessage(content=message.content, source="user")],
         cancellation_token=CancellationToken(),
     ):
-        print(f"MSG TYPE: {type(msg)}")
-        
-        # Print the name of the agent that is sending the message
-        #if hasattr(msg, 'source') and msg.source:
-            #print(f"Agent in use: {msg.source}")
-        
         if isinstance(msg, ModelClientStreamingChunkEvent):
-            print(msg.content)   
             # Stream the model client response to the user.
             if streaming_response is None:
-                # Start a new streaming response.
-                streaming_response = cl.Message(content="", author=msg.source)
-                # Print when a new agent starts responding.            
-                await streaming_response.stream_token(msg.content) 
+                # Start a new streaming response only if the content is not empty.
+                if msg.content.strip():  # Ensure content is not just whitespace.
+                    streaming_response = cl.Message(content="", author=msg.source)
+            if streaming_response:
+                await streaming_response.stream_token(msg.content)
         elif streaming_response is not None:
             # Done streaming the model client response.
             # We can skip the current message as it is just the complete message
@@ -127,5 +120,5 @@ async def chat(message: cl.Message) -> None:
                 final_message += msg.stop_reason
             await cl.Message(content=final_message).send()
         else:
-            # Skip all other message types.            
+            # Skip all other message types.
             pass
