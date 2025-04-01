@@ -3,8 +3,10 @@ import base64
 import logging
 import uuid
 import os
+import chainlit as cl
 
-def generate_mermaid_diagram(mermaid_code, output_format='png', return_url=True, save_file=False):
+@cl.step(type="tool")
+def generate_mermaid_diagram(mermaid_code: str, output_format: str = 'png', return_url: bool = True, save_file: bool = True) -> str:
     """
     Generate a URL for rendering a Mermaid diagram using mermaid.ink.
     
@@ -15,20 +17,23 @@ def generate_mermaid_diagram(mermaid_code, output_format='png', return_url=True,
         save_file (bool): If True, saves the diagram to the diagrams folder
     
     Returns:
-        str: Either the URL to the rendered diagram, the filename of the saved diagram, 
-             or the actual image data
+        str: Return the name of the saved file
     """
     try:
+        # Validate mermaid_code
+        if not mermaid_code or not isinstance(mermaid_code, str):
+            raise ValueError("Invalid Mermaid code. It must be a non-empty string.")
+        
+        # Validate output_format
+        output_format = output_format.lower()
+        if output_format not in ['svg', 'png']:
+            raise ValueError(f"Unsupported output format: {output_format}. Use 'svg' or 'png'.")
+        
         # Base64 encode the diagram code and make it URL safe
         encoded_diagram = base64.urlsafe_b64encode(mermaid_code.encode('utf-8')).decode('utf-8')
         
         # Construct the URL based on the requested format
-        if output_format.lower() == 'svg':
-            url = f"https://mermaid.ink/svg/{encoded_diagram}"
-        elif output_format.lower() == 'png':
-            url = f"https://mermaid.ink/img/{encoded_diagram}"
-        else:
-            raise ValueError(f"Unsupported output format: {output_format}. Use 'svg' or 'png'.")
+        url = f"https://mermaid.ink/{'svg' if output_format == 'svg' else 'img'}/{encoded_diagram}"
         
         # If we only need the URL and don't need to save, return it
         if return_url and not save_file:
@@ -42,7 +47,7 @@ def generate_mermaid_diagram(mermaid_code, output_format='png', return_url=True,
         # If we need to save the file
         if save_file:
             # Generate a unique filename using UUID
-            filename = f"{uuid.uuid4()}.{output_format.lower()}"
+            filename = f"{uuid.uuid4()}.{output_format}"
             
             # Create the diagrams directory if it doesn't exist
             diagrams_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'diagrams')
@@ -64,3 +69,8 @@ def generate_mermaid_diagram(mermaid_code, output_format='png', return_url=True,
     except Exception as e:
         logging.error(f"Error generating Mermaid diagram: {str(e)}")
         raise
+
+@cl.step(type="tool")
+async def get_date() -> str:
+    """Get the current date and time."""    
+    return "2023-10-01T12:00:00Z"  # Placeholder for actual date retrieval logic

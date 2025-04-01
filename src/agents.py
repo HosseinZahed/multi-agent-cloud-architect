@@ -2,7 +2,7 @@ from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
 from model_provider import create_model_client
 from autogen_core import CancellationToken
 import chainlit as cl
-from tools import generate_mermaid_diagram
+from tools import generate_mermaid_diagram, get_date
 
 async def user_input_func(prompt: str, cancellation_token: CancellationToken | None = None) -> str:
     """Get user input from the UI for the user proxy agent."""
@@ -27,11 +27,11 @@ async def user_action_func(prompt: str, cancellation_token: CancellationToken | 
                 cl.Action(name="reject", label="Reject", payload={"value": "reject"}),
             ],
         ).send()
-    except TimeoutError:
+    except TimeoutError:        
         return "User did not provide any input within the time limit."
     if response and response.get("payload"):  # type: ignore
-        if response.get("payload").get("value") == "approve":  # type: ignore
-            return "APPROVE."  # This is the termination condition.
+        if response.get("payload").get("value") == "approve":  # type: ignore            
+            return "APPROVE."  # This is the termination condition.            
         else:
             return "REJECT."
     else:
@@ -74,7 +74,9 @@ def get_participants() -> list[str]:
     # Create the architect agent."""    
     architect_agent = AssistantAgent(
         name="architect_agent",
-        model_client=create_model_client("gpt-4o-mini"),
+        model_client=create_model_client("gpt-4o-mini", function_calling=True),
+        tools=[get_date],
+        reflect_on_tool_use=True,          
         model_client_stream=True,
         system_message=
         """
@@ -84,34 +86,55 @@ def get_participants() -> list[str]:
             Provide links to relevant resources and documentation.
             Your response should be clear and concise, and it should include emojis
             to make the conversation more engaging.
+            At the end of your response, generate a Mermaid flowchart diagram code 
+            that represents the architecture. Use the Mermaid syntax and follow 
+            best practices for creating flowcharts.
+            You can use the get_date tool to show the current date and time.
         """,
-    )
+        )
+    
+    
     
     # Create the illustrator agent."""
-    illustrator_agent = AssistantAgent(
+    illustrator_agent = AssistantAgent(        
         name="illustrator_agent",
-        model_client=create_model_client("gpt-4o"),
-        #tools=[generate_mermaid_diagram],
+        model_client=create_model_client("gpt-4o-mini", function_calling=True),
+        tools=[get_date],
         model_client_stream=True,
+        reflect_on_tool_use=True,        
         system_message=
         """
-            You are a Mermaid flowchart diagram generator. Using the high-level 
-            architecture provided by the architect agent, create a clear and 
-            visually appealing flowchart in Mermaid syntax. Utilize the specified
-            tool to generate the diagram. You need to pass the diagram code to the
-            tool and return the filename produced by the tool's output
-            Whenever you respond, ensure that your output is a JSON object with 
-            the following keys:
-                "text": A string containing the main response message.
-                "image_filename": A string representing the name of file name produced by the tool's output.
-            Ensure that the "image_filename" points to a valid image file. Do not deviate from this format."        
+            Based on the Mermaid code block provided by the architect agent,
+            generate a URL for rendering the diagram using mermaid.ink via the
+            provided tool. Save the diagram as a PNG file in the diagrams folder.
+            Provide the filename of the saved diagram in your response.
         """,
     )
     
+    
+    # Create the architect agent."""    
+    calendar_agent = AssistantAgent(
+        name="calendar_agent",
+        model_client=create_model_client(
+            "mistral-small-2503", 
+            function_calling=True,
+            json_output=True),
+        tools=[get_date],
+        reflect_on_tool_use=True,          
+        model_client_stream=True,
+        system_message=
+        """            
+            You're a helpful assistant.
+        """,
+        )
+    
     return [
-        questioner_agent, 
-        user_input_agent,
-        architect_agent,
-        illustrator_agent,
-        user_approval_agent
+        #questioner_agent, 
+        #user_input_agent,
+        #architect_agent,
+        #illustrator_agent,        
+        #user_approval_agent       
+        
+        calendar_agent,
+        user_approval_agent,
     ]
