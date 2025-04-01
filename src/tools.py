@@ -5,7 +5,7 @@ import uuid
 import os
 import chainlit as cl
 
-@cl.step(type="tool")
+#@cl.step(type="tool")
 def generate_mermaid_diagram(mermaid_code: str, output_format: str = 'png', return_url: bool = True, save_file: bool = True) -> str:
     """
     Generate a URL for rendering a Mermaid diagram using mermaid.ink.
@@ -70,7 +70,31 @@ def generate_mermaid_diagram(mermaid_code: str, output_format: str = 'png', retu
         logging.error(f"Error generating Mermaid diagram: {str(e)}")
         raise
 
-@cl.step(type="tool")
+#@cl.step(type="tool")
 async def get_date() -> str:
     """Get the current date and time."""    
     return "2023-10-01T12:00:00Z"  # Placeholder for actual date retrieval logic
+
+#@cl.step(type="tool")
+async def generate_mermaid_diagram2(diagram_code: str, diagram_type: str = 'mermaid', output_format: str = 'png') -> bytes:
+    """
+    Generate a diagram using the Kroki API.
+    
+    Args:
+        diagram_code (str): The diagram code (mermaid, graphviz, etc.)
+        diagram_type (str): The type of diagram (mermaid, graphviz, plantuml, etc.)
+        output_format (str): The desired output format (png, svg, pdf, etc.)
+    
+    Returns:
+        bytes: The diagram image data
+    """
+    url = f"https://kroki.io/{diagram_type}/{output_format}"
+    
+    # Send the diagram code directly in the request body
+    response = requests.post(url, data=diagram_code)
+    
+    # Raise exception for bad responses
+    response.raise_for_status()
+    
+    # Return the image data
+    return response.content
