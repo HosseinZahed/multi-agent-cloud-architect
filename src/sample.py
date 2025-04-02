@@ -1,4 +1,6 @@
 from typing import List, cast
+import os
+import re
 
 import chainlit as cl
 from autogen_agentchat.agents import AssistantAgent
@@ -7,7 +9,6 @@ from autogen_agentchat.messages import ModelClientStreamingChunkEvent, TextMessa
 from autogen_core import CancellationToken
 from model_provider import create_model_client
 from tools import get_date, generate_mermaid_diagram
-
 
 
 @cl.set_starters  # type: ignore
@@ -20,6 +21,7 @@ async def set_starts() -> List[cl.Starter]:
         cl.Starter(
             label="Mermaid Diagram",
             message="""
+            %%{init: {'theme':'neutral'}}%%
             flowchart TD
                 A[User Interface] -->|User Input| B[Azure Functions]
                 B -->|Invoke Search| C[Azure Cognitive Search]
@@ -40,17 +42,22 @@ async def get_weather(city: str) -> str:
 
 
 @cl.on_chat_start  # type: ignore
-async def start_chat() -> None:    
+async def start_chat() -> None:
 
     # Create the assistant agent with the get_weather tool.
     assistant = AssistantAgent(
         name="assistant",
         tools=[generate_mermaid_diagram],
         model_client=create_model_client(
-            "mistral-small-2503", 
+            "mistral-small-2503",
             function_calling=True,
-            json_output=True), # Enable JSON output for function calling.),
-        system_message="You are a helpful assistant",
+            json_output=True),  # Enable JSON output for function calling.),
+        system_message="""
+            You are a helpful assistant.
+            Use the tool to generate a diagram.
+            Explain  the diagram in detail.
+            Include the filename part of the response from the tool.            
+        """,
         model_client_stream=True,  # Enable model client streaming.
         reflect_on_tool_use=True,  # Reflect on tool use.
     )
@@ -76,3 +83,44 @@ async def chat(message: cl.Message) -> None:
         elif isinstance(msg, Response):
             # Done streaming the model client response. Send the message.
             await response.send()
+
+            # Call the function in the original code
+            await process_response_content(response)
+
+
+async def process_response_content(response: cl.Message) -> None:
+    """Process the response content to handle image filenames and Markdown image tags."""
+    # Check if response contains an image filename
+    content = response.content
+    if content and isinstance(content, str):
+        # Check for Markdown image tags and remove them
+        markdown_img_pattern = r'!\[Diagram]\(.*?\)'
+        if re.search(markdown_img_pattern, content):
+            # Remove Markdown image tags
+            cleaned_content = re.sub(markdown_img_pattern, '', content)
+            # Update the message content
+            await response.update(content=cleaned_content)
+            # Refresh content variable with cleaned content
+            content = cleaned_content
+
+        # Look for image filenames (UUID format with png/jpg/etc extension)
+        image_pattern = r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|jpeg|svg|pdf|gif))'
+        matches = re.findall(image_pattern, content)
+
+        if matches:
+            for match in matches:
+                filename = match[0]  # Get the full filename
+
+                # Build the path to the image
+                src_dir = os.path.dirname(os.path.abspath(__file__))
+                image_path = os.path.join(src_dir, '.files', filename)
+
+                # Check if the file exists
+                if os.path.exists(image_path):
+                    # Display the image
+                    image_element = cl.Image(
+                        path=image_path,
+                        name=filename,
+                        display="inline"
+                    )
+                    await image_element.send(for_id=response.id)

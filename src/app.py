@@ -1,5 +1,6 @@
 from typing import List, cast
-
+import re
+import os
 import chainlit as cl
 from autogen_agentchat.base import TaskResult
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination, TimeoutTermination
@@ -23,7 +24,7 @@ async def start_chat() -> None:
     # Chain the assistant, critic and user agents using RoundRobinGroupChat.
     group_chat = RoundRobinGroupChat(
         participants=get_participants(),
-        max_turns=5,
+        max_turns=3,
         termination_condition=termination)
 
     selector_group_chat = SelectorGroupChat(
@@ -81,47 +82,82 @@ async def set_starts() -> List[cl.Starter]:
             message="Outline the steps to set up a CI/CD pipeline using Azure DevOps.",
         ),
         cl.Starter(
-            label="Current Date",
-            message="What is the current date?"
+            label="AI Agent",
+            message="Build an AI agent with a FE, BE, and a database.",
         ),
     ]
 
 
 @cl.on_message  # type: ignore
 async def chat(message: cl.Message) -> None:
-    # Get the team from the user session.
-    team = cast(RoundRobinGroupChat,
-                cl.user_session.get("team"))  # type: ignore
-    # Streaming response message.
-    streaming_response: cl.Message | None = None
-    # Stream the messages from the team.
-    async for msg in team.run_stream(
+    # Get the assistant agent from the user session.
+    agent = cast(RoundRobinGroupChat, cl.user_session.get("team"))  # type: ignore
+    # Construct the response message.
+    response = cl.Message(content="")
+    current_source = None
+    
+    async for msg in agent.run_stream(
         task=[TextMessage(content=message.content, source="user")],
         cancellation_token=CancellationToken(),
     ):
         if isinstance(msg, ModelClientStreamingChunkEvent):
+            # If source has changed, update the message with a header showing the source
+            if current_source != msg.source:
+                current_source = msg.source
+                if response.content:
+                    # Send the current response before starting a new one from different source
+                    await response.send()
+                    # Process the response content for images
+                    await process_response_content(response)
+                    # Create a new response message with source header
+                    response = cl.Message(content=f"**[{current_source}]**\n\n")
+                else:
+                    # First response, just add the source header
+                    response.content = f"**[{current_source}]**\n\n"
+            
             # Stream the model client response to the user.
-            if streaming_response is None:
-                # Start a new streaming response only if the content is not empty.
-                if msg.content.strip():  # Ensure content is not just whitespace.
-                    streaming_response = cl.Message(
-                        content="", author=msg.source)
-            if streaming_response:
-                await streaming_response.stream_token(msg.content)
-        elif streaming_response is not None:
-            # Done streaming the model client response.
-            # We can skip the current message as it is just the complete message
-            # of the streaming response.
-            await streaming_response.send()
-            # Reset the streaming response so we won't enter this block again
-            # until the next streaming response is complete.
-            streaming_response = None
+            await response.stream_token(msg.content)
         elif isinstance(msg, TaskResult):
-            # Send the task termination message.
-            final_message = "Task terminated. "
-            if msg.stop_reason:
-                final_message += msg.stop_reason
-            await cl.Message(content=final_message).send()
-        else:
-            # Skip all other message types.
-            pass
+            # Done streaming the model client response. Send the message.
+            await response.send()
+            
+            # Process the response content for images
+            await process_response_content(response)
+
+
+async def process_response_content(response: cl.Message) -> None:
+    """Process the response content to handle image filenames and Markdown image tags."""
+    # Check if response contains an image filename
+    content = response.content
+    if content and isinstance(content, str):
+        # Check for Markdown image tags and remove them
+        markdown_img_pattern = r'!\[Diagram]\(.*?\)'
+        if re.search(markdown_img_pattern, content):
+            # Remove Markdown image tags
+            cleaned_content = re.sub(markdown_img_pattern, '', content)
+            # Update the message content
+            await response.update(content=cleaned_content)
+            # Refresh content variable with cleaned content
+            content = cleaned_content
+
+        # Look for image filenames (UUID format with png/jpg/etc extension)
+        image_pattern = r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|jpeg|svg|pdf|gif))'
+        matches = re.findall(image_pattern, content)
+
+        if matches:
+            for match in matches:
+                filename = match[0]  # Get the full filename
+
+                # Build the path to the image
+                src_dir = os.path.dirname(os.path.abspath(__file__))
+                image_path = os.path.join(src_dir, '.files', filename)
+
+                # Check if the file exists
+                if os.path.exists(image_path):
+                    # Display the image
+                    image_element = cl.Image(
+                        path=image_path,
+                        name=filename,
+                        display="inline"
+                    )
+                    await image_element.send(for_id=response.id)

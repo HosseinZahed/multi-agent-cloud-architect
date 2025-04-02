@@ -1,0 +1,12 @@
+POST http://localhost:1234/mermaid/png
+Content-Type: application/json
+
+{
+    "diagram_code": "graph TD     A[User Interface (FE)] -->|HTTP Requests| B[Azure Static Web Apps]     B -->|API Calls| C[Azure Functions (BE)]     C -->|Data Operations| D[Azure Cosmos DB]     C -->|AI Processing| E[Azure Cognitive Services]     C -->|Custom ML| F[Azure Machine Learning]     D -->|Blob Data| G[Azure Blob Storage]     C -->|Monitoring| H[Azure Application Insights]     H -->|Logs and Metrics| I[Azure Log Analytics]",
+    "diagram_type": "mermaid",
+    "output_format": "png"
+}
+
+###
+GET https://mermaid.ink/img/pako:eNpNkM9qwzAMh19F6NRB8wI5DNak7aWwwXqLexCxUpvNf3AURkny7rNbynaTPn0_ITRjHzRjjddE0cC5VR7grWtMsqM4Gi9QVa_LkQVc8HxbYLc5BhhNiNH660uxd0WBZj4ViUGM9V9rGTT37LvnBdruRFFCvPzx809YYN_ZD5MX_-cmcU4cuoHqgaqeEjSUsqBECW7RcXJkdT55LiGFYtixwjqXmgeavkWh8mtWp6hJeK-thIS1pIm3SJOEz5vvn_3DaS3lB7gHXH8BFrFcZw
+Content-Type: application/json

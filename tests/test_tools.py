@@ -10,6 +10,7 @@ sys.path.append('../')
 class TestGenerateMermaidDiagram(unittest.TestCase):
     def setUp(self):
         self.valid_mermaid_code = """
+        %%{init: {'theme':'neutral'}}%%
         flowchart TD
             A[User Interface] -->|User Input| B[Azure Functions]
             B -->|Invoke Search| C[Azure Cognitive Search]
