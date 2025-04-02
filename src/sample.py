@@ -6,7 +6,7 @@ from autogen_agentchat.base import Response
 from autogen_agentchat.messages import ModelClientStreamingChunkEvent, TextMessage
 from autogen_core import CancellationToken
 from model_provider import create_model_client
-from tools import get_date
+from tools import get_date, generate_mermaid_diagram
 
 
 
@@ -18,8 +18,17 @@ async def set_starts() -> List[cl.Starter]:
             message="What date is it today?",
         ),
         cl.Starter(
-            label="Weather",
-            message="Find the weather in New York City.",
+            label="Mermaid Diagram",
+            message="""
+            flowchart TD
+                A[User Interface] -->|User Input| B[Azure Functions]
+                B -->|Invoke Search| C[Azure Cognitive Search]
+                C -->|Retrieve Relevant Docs| D[Azure Blob Storage]
+                B -->|Process and Generate| E[Azure OpenAI Service]
+                E -->|Return Response| B
+                B -->|Send Output| A
+                B -->|Log Data| F[Azure Application Insights]
+            """,
         ),
     ]
 
@@ -36,7 +45,7 @@ async def start_chat() -> None:
     # Create the assistant agent with the get_weather tool.
     assistant = AssistantAgent(
         name="assistant",
-        tools=[get_date],
+        tools=[generate_mermaid_diagram],
         model_client=create_model_client(
             "mistral-small-2503", 
             function_calling=True,

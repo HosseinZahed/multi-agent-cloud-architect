@@ -9,29 +9,30 @@ from autogen_core import CancellationToken
 from agents import get_participants
 from model_provider import create_model_client
 
+
 @cl.on_chat_start  # type: ignore
 async def start_chat() -> None:
 
     # Termination condition.
     text_mention_termination = TextMentionTermination("TERMINATE")
     max_messages_termination = MaxMessageTermination(max_messages=25)
-    timeout_termination = TimeoutTermination(timeout_seconds=60 * 5)  # 5 minutes timeout
+    timeout_termination = TimeoutTermination(
+        timeout_seconds=60 * 5)  # 5 minutes timeout
     termination = text_mention_termination | max_messages_termination | timeout_termination
 
     # Chain the assistant, critic and user agents using RoundRobinGroupChat.
-    group_chat = RoundRobinGroupChat(        
+    group_chat = RoundRobinGroupChat(
         participants=get_participants(),
-        max_turns=5,    
+        max_turns=5,
         termination_condition=termination)
-    
+
     selector_group_chat = SelectorGroupChat(
         participants=get_participants(),
         model_client=create_model_client("gpt-4o-mini"),
         termination_condition=termination,
         allow_repeated_speaker=True,
         max_selector_attempts=3,
-        selector_prompt=
-        """
+        selector_prompt="""
         You are in a role play game. The final goal is to create a high-level architecture 
         using the best practices from the Azure Architecture Center and the Cloud Adoption Framework.
         Initially the user provides a message with the architecture requirements.
@@ -61,7 +62,7 @@ async def start_chat() -> None:
     # Set the assistant agent in the user session.
     cl.user_session.set("prompt_history", "")  # type: ignore
     cl.user_session.set("team", group_chat)  # type: ignore
-    #cl.user_session.set("team", selector_group_chat)  # type: ignore
+    # cl.user_session.set("team", selector_group_chat)  # type: ignore
 
 
 @cl.set_starters  # type: ignore
@@ -82,14 +83,15 @@ async def set_starts() -> List[cl.Starter]:
         cl.Starter(
             label="Current Date",
             message="What is the current date?"
-        ),       
+        ),
     ]
 
 
 @cl.on_message  # type: ignore
 async def chat(message: cl.Message) -> None:
     # Get the team from the user session.
-    team = cast(RoundRobinGroupChat, cl.user_session.get("team"))  # type: ignore
+    team = cast(RoundRobinGroupChat,
+                cl.user_session.get("team"))  # type: ignore
     # Streaming response message.
     streaming_response: cl.Message | None = None
     # Stream the messages from the team.
@@ -102,7 +104,8 @@ async def chat(message: cl.Message) -> None:
             if streaming_response is None:
                 # Start a new streaming response only if the content is not empty.
                 if msg.content.strip():  # Ensure content is not just whitespace.
-                    streaming_response = cl.Message(content="", author=msg.source)
+                    streaming_response = cl.Message(
+                        content="", author=msg.source)
             if streaming_response:
                 await streaming_response.stream_token(msg.content)
         elif streaming_response is not None:
