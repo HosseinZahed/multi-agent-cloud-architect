@@ -1,0 +1,3 @@
+// Kroki API test endpoints
+GET https://kroki.io/mermaid/png/eNrjSi9KLMhQCHGx5lIAAkddXTsnBNMZwnQCMqEKnCFMAEO3CqI=
+Content-Type: application/json

@@ -1,6 +1,7 @@
-autogen-core
 autogen-agentchat
-autogen-ext[openai,azure,ollama]
-dotenv
+autogen-ext[openai,azure]
 asyncio
+dotenv
 chainlit
+rich
+ipykernel

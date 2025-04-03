@@ -7,8 +7,8 @@ from autogen_agentchat.conditions import TextMentionTermination
 from autogen_agentchat.messages import ModelClientStreamingChunkEvent, TextMessage
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_core import CancellationToken
-from agents import get_agents
-from models import get_model_client   
+from group_chat_agents import get_agents
+from model_provider import get_model_client   
 
 @cl.on_chat_start
 async def start_chat():
