@@ -1,6 +1,7 @@
-from typing import List, cast
+from typing import List, cast, Optional, Dict
 import re
 import os
+from dotenv import load_dotenv
 import chainlit as cl
 from autogen_agentchat.base import TaskResult
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination, TimeoutTermination
@@ -10,10 +11,25 @@ from autogen_core import CancellationToken
 from agents import get_participants
 from model_provider import create_model_client
 
+# Load environment variables from .env file
+load_dotenv(override=True)
+
+
+# @cl.oauth_callback
+# async def oauth_callback(
+#     provider_id: str,
+#     token: str,
+#     raw_user_data: Dict[str, str],
+#     default_user: cl.User,
+# ) -> Optional[cl.User]:
+#     print(
+#         f"OAuth callback for provider {provider_id} with token {token} and user data {raw_user_data}")
+#     return default_user
+
 
 @cl.on_chat_start  # type: ignore
 async def start_chat() -> None:
-
+    load_dotenv(override=True)
     # Termination condition.
     text_mention_termination = TextMentionTermination("TERMINATE")
     max_messages_termination = MaxMessageTermination(max_messages=25)
@@ -91,11 +107,12 @@ async def set_starts() -> List[cl.Starter]:
 @cl.on_message  # type: ignore
 async def chat(message: cl.Message) -> None:
     # Get the assistant agent from the user session.
-    agent = cast(RoundRobinGroupChat, cl.user_session.get("team"))  # type: ignore
+    agent = cast(RoundRobinGroupChat,
+                 cl.user_session.get("team"))  # type: ignore
     # Construct the response message.
     response = cl.Message(content="")
     current_source = None
-    
+
     async for msg in agent.run_stream(
         task=[TextMessage(content=message.content, source="user")],
         cancellation_token=CancellationToken(),
@@ -110,17 +127,18 @@ async def chat(message: cl.Message) -> None:
                     # Process the response content for images
                     await process_response_content(response)
                     # Create a new response message with source header
-                    response = cl.Message(content=f"**[{current_source}]**\n\n")
+                    response = cl.Message(
+                        content=f"**[{current_source}]**\n\n")
                 else:
                     # First response, just add the source header
                     response.content = f"**[{current_source}]**\n\n"
-            
+
             # Stream the model client response to the user.
             await response.stream_token(msg.content)
         elif isinstance(msg, TaskResult):
             # Done streaming the model client response. Send the message.
             await response.send()
-            
+
             # Process the response content for images
             await process_response_content(response)
 
