@@ -1,9 +1,11 @@
-from src.tools import generate_mermaid_diagram, generate_mermaid_diagram
+from src.tools import generate_mermaid_diagram, generate_mermaid_diagram, encode_base64
 from unittest.mock import patch, MagicMock
 import asyncio
 import os
 import unittest
 import sys
+import base64
+import zlib
 sys.path.append('../')
 
 
@@ -139,6 +141,54 @@ class TestGenerateMermaidDiagram(unittest.TestCase):
 
         # Cleanup
         os.remove(file_path)
+
+
+class TestEncodeBase64(unittest.TestCase):
+    def setUp(self):
+        """Set up test cases."""
+        self.test_strings = [
+            "Hello, World!",
+            "",
+            "Special characters: !@#$%^&*()",
+            "A" * 1000  # A large string
+        ]
+
+    @patch('sys.stdin')
+    def test_encode_base64(self, mock_stdin):
+        """Test the encode_base64 function with various inputs."""
+        for test_str in self.test_strings:
+            # Mock stdin.read() to return our test string
+            mock_stdin.read.return_value = test_str
+            
+            # Call the function
+            encoded = encode_base64(test_str)
+            
+            # Verify it's a string
+            self.assertIsInstance(encoded, str)
+            
+            # Manually encode to verify correctness
+            expected = base64.urlsafe_b64encode(
+                zlib.compress(test_str.encode('utf-8'), 9)
+            ).decode('ascii')
+            
+            # Compare with expected result
+            self.assertEqual(encoded, expected)
+
+    @patch('sys.stdin')
+    def test_encode_base64_decoding(self, mock_stdin):
+        """Test that encoded data can be properly decoded."""
+        test_str = "This is a test string for encoding and decoding"
+        mock_stdin.read.return_value = test_str
+        
+        # Encode the string
+        encoded = encode_base64(test_str)
+        
+        # Decode and decompress
+        decoded_bytes = zlib.decompress(base64.urlsafe_b64decode(encoded))
+        decoded = decoded_bytes.decode('utf-8')
+        
+        # Original stdin input should match decoded result
+        self.assertEqual(test_str, decoded)
 
 
 if __name__ == "__main__":

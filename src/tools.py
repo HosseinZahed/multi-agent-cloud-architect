@@ -1,8 +1,12 @@
 import requests
+from requests.models import Response
 import base64
 import logging
 import uuid
 import os
+import sys 
+import base64 
+import zlib
 import chainlit as cl
 from typing import Dict, Any
 
@@ -54,37 +58,36 @@ async def generate_mermaid_diagram(diagram_code: str, diagram_type: str = 'merma
         # Return a JSON-compatible dictionary with the result
         return {
             "filename": filename,
-            "file_path": file_path,
-            "diagram_type": diagram_type,
-            "output_format": output_format,
-            "status": "success"
+            "valid": True
         }
 
     except Exception as e:
         error_message = f"Error generating diagram with Kroki API: {str(e)}"
         logging.error(error_message)
         # Return error information as JSON
-        return {
-            "status": "error",
+        return {            
             "message": error_message,
-            "error": str(e)
+            "error": str(e),
+            "valid": False
         }
 
 
-@cl.step(type="tool")
-async def validate_mermaid_code(mermaid_code: str, output_format: str = 'png') -> str:
+#@cl.step(type="tool")
+def generate_mermaid_diagram_encoded(mermaid_code: str, output_format: str = 'png') -> str:
     """
-        Validate the syntax of the provided Mermaid code using the Mermaid API.
-    """
-    # Clean the Mermaid code
-    mermaid_code = clean_mermaid_code(mermaid_code)
-    
-    # Encode the Mermaid code in base64
-    encoded_mermaid_code = base64.b64encode(mermaid_code.encode('utf-8')).decode('utf-8')
+        Generate a diagram using the Kroki API.
+        Args:
+            mermaid_code (str): The Mermaid diagram code.
+            output_format (str): The desired output format (png, svg, pdf, etc.)
+        Returns:
+            str: The filename of the generated diagram.       
+    """    
+    # Encode the Mermaid code in base64    
+    encoded_mermaid_code = encode_base64(mermaid_code)
     print(f"Encoded Mermaid code: {encoded_mermaid_code}")
     
     
-    api_url = f"https://mermaid.ink/img/pako:{encoded_mermaid_code}"
+    api_url = f"https://kroki.io/mermaid/png"
 
     try:    
         response = requests.get(api_url)
@@ -92,20 +95,19 @@ async def validate_mermaid_code(mermaid_code: str, output_format: str = 'png') -
         response.raise_for_status()
         
         # Save the image to a file
-        #filename = save_image(response, output_format)
-        filename = f"{uuid.uuid4()}.{output_format}"
+        filename = save_image(response, output_format)
+        #filename = f"{uuid.uuid4()}.{output_format}"
         
         # Return the result as JSON
         return {
             "filename": filename,            
-            "output_format": output_format,
             "valid": True
         }
         
     except Exception as e:
         logging.error(str(e))
         # Return error information as JSON
-        return {            
+        return {
             "error": str(e),
             "valid": False
         }
@@ -113,17 +115,15 @@ async def validate_mermaid_code(mermaid_code: str, output_format: str = 'png') -
 def clean_mermaid_code(mermaid_code: str) -> str:
     """
         Clean the Mermaid code by removing unnecessary whitespace and comments.
-    """
-    # Remove leading and trailing whitespace
-    mermaid_code = mermaid_code.strip()
-    
+    """    
     # Remove parentheses and comments
     mermaid_code = mermaid_code.replace("(", "").replace(")", "").replace("//", "").replace("#", "")
+    return mermaid_code
     
     
 
 
-def save_image(response, output_format: str = 'png') -> str:
+def save_image(response: Response, output_format: str = 'png') -> str:
     """
         Save the image data to a file and return the filename.
     """    
@@ -147,6 +147,11 @@ def save_image(response, output_format: str = 'png') -> str:
         
     return filename
 
+def encode_base64(data: str) -> str:
+    """
+        Encode the given data in base64.
+    """
+    return base64.urlsafe_b64encode(zlib.compress(data.encode('utf-8'), 9)).decode('ascii')
 
 @cl.step(type="tool")
 async def get_date() -> str:

@@ -2,7 +2,7 @@ from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
 from model_provider import create_model_client
 from autogen_core import CancellationToken
 import chainlit as cl
-from tools import generate_mermaid_diagram, validate_mermaid_code, get_date
+from tools import generate_mermaid_diagram, get_date
 
 
 async def user_input_func(prompt: str, cancellation_token: CancellationToken | None = None) -> str:
@@ -106,29 +106,28 @@ def get_participants() -> list[str]:
         """,
     )
 
-    # Create the illustrator agent.
+    # Create the diagram agent.
     diagram_agent = AssistantAgent(
         name="diagram_agent",
         model_client=create_model_client(
             "mistral-small-2503",
             function_calling=True,
             json_output=True),
-        tools=[validate_mermaid_code],
+        tools=[generate_mermaid_diagram],
         reflect_on_tool_use=True,
         model_client_stream=True,
         system_message="""
-            You are a diagram generation specialist. When presented with a high-level architecture from the architect agent:
-            1. Provide the Mermaid code to generate the diagram consider the following:
-               - Use the Mermaid syntax to represent the architecture.
-               - Include all components and their relationships as described in the architecture.
-               - Ensure the diagram is clear, concise, and easy to understand.
-               - Use simple and consistent labels for components and connections.
-               - Avoid advanced or complex Mermaid features that may hinder readability.
-            2. Use the provided tool to validate the generated Mermaid code.
-            3. If the code is invalid, fix the issues and regenerate it until it is valid.
-            4. Only after the code is valid, generate the code as the output.
+            You're a Mermaid diagram generation specialist working with Azure architectures.
             
-            If there are any syntax errors or issues with the Mermaid code, provide specific feedback on what needs to be corrected.
+            When presented with a high-level architecture from the architect agent:
+            - Analyze the architecture components and their connections
+            - Create a simple, focused flowchart using Mermaid syntax
+            - Exclude subgraphs, parentheses, special characters and symbols
+            - Include only essential components, services, and data flows            
+            - Use clear, descriptive node labels and meaningful connection descriptions
+            - Ensure diagram is technically accurate and follows Azure architecture patterns
+            - Exclude any styling, CSS formatting, or comments from the diagram code            
+            - Generate clean, minimal code that will render correctly in standard Mermaid viewers
         """,
     )
 
@@ -143,13 +142,12 @@ def get_participants() -> list[str]:
         reflect_on_tool_use=True,
         model_client_stream=True,
         system_message="""
-            You are a diagram generation specialist. When presented with Mermaid code from an Azure architecture design:
-            
-            1. Use the appropriate tool to render the Mermaid diagram
-            2. Provide the exact filename of the saved diagram in your response
-            3. Confirm successful generation of the diagram
-            
-            If there are any syntax errors or issues with the Mermaid code, provide specific feedback on what needs to be corrected.
+            You're a diagram illustrator specialist.
+            When presented with Mermaid code from the diagram agent:
+            - Keep new lines and indentation from the provided code
+            - Illustrate the diagram using the provided tool.            
+            - If the answer from the tool is valid, return the diagram filename.
+            - If the answer from the tool is invalid, return an error message.
         """,
     )
 
@@ -169,11 +167,11 @@ def get_participants() -> list[str]:
     )
 
     return [
-        questioner_agent,
+        #questioner_agent,
         # user_input_agent,
         architect_agent,
         diagram_agent,
-        # illustrator_agent,
+        illustrator_agent,
         # user_approval_agent
 
         # calendar_agent,
