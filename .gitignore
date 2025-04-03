@@ -175,5 +175,5 @@ cython_debug/
 
 
 # Chainlit stuff
-.files
-src/.files
+.files/*
+src/.files/*
