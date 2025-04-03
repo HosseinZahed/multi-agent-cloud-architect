@@ -1,6 +1,7 @@
 from typing import List, cast
 import re
 import os
+from dotenv import load_dotenv
 import chainlit as cl
 from autogen_agentchat.base import TaskResult
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination, TimeoutTermination
@@ -10,10 +11,12 @@ from autogen_core import CancellationToken
 from agents import get_participants
 from model_provider import create_model_client
 
+# Load environment variables from .env file
+load_dotenv(override=True)
 
 @cl.on_chat_start  # type: ignore
-async def start_chat() -> None:
-
+async def start_chat() -> None:   
+    
     # Termination condition.
     text_mention_termination = TextMentionTermination("TERMINATE")
     max_messages_termination = MaxMessageTermination(max_messages=25)
