@@ -5,3 +5,4 @@ dotenv
 chainlit
 rich
 ipykernel
+markitdown[all]
