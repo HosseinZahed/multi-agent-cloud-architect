@@ -1,5 +1,5 @@
 autogen-agentchat
-autogen-ext[openai,azure]
+autogen-ext[openai,azure,mcp]
 asyncio
 dotenv
 chainlit
