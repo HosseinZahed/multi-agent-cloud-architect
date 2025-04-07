@@ -2,12 +2,13 @@ import os
 from dotenv import load_dotenv
 from autogen_ext.models.azure import AzureAIChatCompletionClient
 from azure.core.credentials import AzureKeyCredential
+from azure.ai.inference import EmbeddingsClient
+
 
 # Load environment variables from .env file
 load_dotenv(override=True)
 
 # Create a model client for Azure OpenAI
-
 
 def create_model_client(
     model_name: str,
@@ -15,7 +16,7 @@ def create_model_client(
     function_calling: bool = False,
     structured_output: bool = False,
     vision: bool = False,
-    model_family: str = "Unknown"
+    model_family: str = "text"
 ) -> AzureAIChatCompletionClient:
     """
     Create a model client for Azure OpenAI.
@@ -33,3 +34,15 @@ def create_model_client(
             "family": model_family
         }
     )
+
+def create_embeddings_client(
+    model_name: str = "text-embedding-3-small" 
+    ) -> AzureAIChatCompletionClient:
+    """
+    Create an embeddings client for Azure OpenAI.
+    """
+    return EmbeddingsClient(
+        model=model_name,
+        endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        credential=AzureKeyCredential(os.getenv("GITHUB_TOKEN"))
+)

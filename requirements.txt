@@ -6,3 +6,4 @@ chainlit
 rich
 ipykernel
 markitdown[all]
+chromadb
