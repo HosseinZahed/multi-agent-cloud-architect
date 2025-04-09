@@ -8,7 +8,7 @@ from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermi
 from autogen_agentchat.messages import ModelClientStreamingChunkEvent, TextMessage
 from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_core import CancellationToken
-from agents import get_participants
+from agents_builder import get_participants
 from model_provider import create_model_client
 
 # Load environment variables from .env file

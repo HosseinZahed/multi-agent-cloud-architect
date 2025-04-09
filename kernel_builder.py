@@ -1,43 +1,32 @@
 import os
-from dotenv import load_dotenv
-from semantic_kernel.kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
+import semantic_kernel as sk
 from openai import AsyncOpenAI
+from semantic_kernel.connectors.ai import FunctionChoiceBehavior
+from semantic_kernel.kernel import Kernel
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion, OpenAIChatPromptExecutionSettings
 
-# Load environment variables from .env file
-load_dotenv(override=True)
 
+# Create a kernel with Azure OpenAI service
 def create_kernel() -> Kernel:
     """
-    Create a kernel with Azure OpenAI service.
+    Create a kernel with the required agents.
     """
-    kernel = Kernel()
-
+    # Create a kernel with Azure OpenAI service.
     client = AsyncOpenAI(api_key=os.environ["GITHUB_TOKEN"],
                          base_url=os.environ["AZURE_OPENAI_ENDPOINT"])
 
-    kernel.add_service(
-        AzureChatCompletion(
-            ai_model_id="gpt-35-turbo",
-            async_client=client,
-            service_id=service_id
-        )
-    )
+    # Define the request settings for the OpenAI API
+    # request_settings = OpenAIChatPromptExecutionSettings(
+    #     function_choice_behavior=FunctionChoiceBehavior.Auto(
+    #         filters={"excluded_plugins": ["ChatBot"]})
+    # )
 
-    return kernel
-
-def create_kernel_with_chat_completion(service_id: str, model_name: str) -> Kernel:
-    kernel = Kernel()
-    service_id = "agent"
-
-    client = AsyncOpenAI(api_key=os.environ["GITHUB_TOKEN"],
-                         base_url=os.environ["AZURE_OPENAI_ENDPOINT"])
-
-    kernel.add_service(
-        AzureChatCompletion(
-            ai_model_id=model_name,
-            async_client=client,
-            service_id=service_id
+    # Create a kernel with the client and request settings
+    kernel = sk.Kernel()
+    kernel.add_service(OpenAIChatCompletion(
+        ai_model_id="gpt-4o-mini",
+        async_client=client,
+        service_id="agent-service"
         )
     )
 
