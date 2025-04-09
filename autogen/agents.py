@@ -167,11 +167,11 @@ def get_participants() -> list[str]:
     )
 
     return [
-        #questioner_agent,
-        # user_input_agent,
-        architect_agent,
-        diagram_agent,
-        illustrator_agent,
+        questioner_agent,
+        user_input_agent,
+        # architect_agent,
+        # diagram_agent,
+        # illustrator_agent,
         # user_approval_agent
 
         # calendar_agent,

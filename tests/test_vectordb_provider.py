@@ -7,7 +7,7 @@ sys.path.append('../')
 class TestPersistentChromaDBClient(unittest.TestCase):
 
     def setUp(self):
-        from src.vectordb_provider import PersistentChromaDBClient
+        from autogen.vectordb_provider import PersistentChromaDBClient
         self.db_path = "test_db"
         self.client = PersistentChromaDBClient(db_path=self.db_path)
         #self.client.client = MagicMock()  # Mock the ChromaDB client
