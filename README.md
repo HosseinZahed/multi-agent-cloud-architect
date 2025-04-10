@@ -22,20 +22,29 @@ Activate the virtual environment:
   ```
 
 ### 2. 📄 Create a `.env` File
+
+
 Create a `.env` file at the root of the project and add the following environment variables:
 
 ```env
-AZURE_OPENAI_ENDPOINT="<your_azure_openai_endpoint>"
+AZURE_OPENAI_ENDPOINT="https://models.inference.ai.azure.com"
 GITHUB_TOKEN="<your_github_token>"
 
-CHAINLIT_URL="<your_chainlit_url>"
-CHAINLIT_AUTH_SECRET="<your_chainlit_auth_secret>"
+### Uncomment the lines below to enable OAuth authentication with Azure EntraID
+#CHAINLIT_URL="http://localhost:8000"
+#CHAINLIT_AUTH_SECRET="<your_chainlit_auth_secret>"
 
-OAUTH_AZURE_AD_CLIENT_ID="<your_oauth_azure_ad_client_id>"
-OAUTH_AZURE_AD_CLIENT_SECRET="<your_oauth_azure_ad_client_secret>"
-OAUTH_AZURE_AD_TENANT_ID="<your_oauth_azure_ad_tenant_id>"
-OAUTH_AZURE_AD_ENABLE_SINGLE_TENANT=<true_or_false>
+#OAUTH_AZURE_AD_CLIENT_ID="<your_oauth_azure_ad_client_id>"
+#OAUTH_AZURE_AD_CLIENT_SECRET="<your_oauth_azure_ad_client_secret>"
+#OAUTH_AZURE_AD_TENANT_ID="<your_oauth_azure_ad_tenant_id>"
+#OAUTH_AZURE_AD_ENABLE_SINGLE_TENANT=True
 ```
+⚠️**Notes:**
+- Navigate to [GitHub Developer Settings](https://github.com/settings/tokens) and create a Personal Access Token (PAT). Use this token for the `GITHUB_TOKEN` variable. No specific scope is required.
+- The `CHAINLIT_AUTH_SECRET` is a secret key used for authentication. You can generate it by running the following command:
+  ```bash
+  chainlit create-secret
+  ```
 
 ### 3. 📦 Install Dependencies
 After setting up the virtual environment and `.env` file, install the required dependencies:
