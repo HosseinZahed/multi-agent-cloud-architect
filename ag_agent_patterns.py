@@ -7,8 +7,8 @@ from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import ModelClientStreamingChunkEvent, TextMessage
 from autogen_core import CancellationToken
-from model_provider import create_model_client
-from tools import get_date, generate_mermaid_diagram
+from ag_model_provider import create_model_client
+from ag_tools import get_date, generate_mermaid_diagram
 
 
 @cl.set_starters  # type: ignore

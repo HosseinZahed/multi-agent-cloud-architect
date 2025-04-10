@@ -1,35 +1,38 @@
 from typing import List, cast, Optional, Dict
 import re
 import os
-from dotenv import load_dotenv
 import chainlit as cl
 from autogen_agentchat.base import TaskResult
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination, TimeoutTermination
 from autogen_agentchat.messages import ModelClientStreamingChunkEvent, TextMessage
 from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_core import CancellationToken
-from agents_builder import get_participants
-from model_provider import create_model_client
-
-# Load environment variables from .env file
-load_dotenv(override=True)
+from ag_agents_builder import get_participants
+from ag_model_builder import create_model_client
 
 
-# @cl.oauth_callback
-# async def oauth_callback(
-#     provider_id: str,
-#     token: str,
-#     raw_user_data: Dict[str, str],
-#     default_user: cl.User,
-# ) -> Optional[cl.User]:
-#     print(
-#         f"OAuth callback for provider {provider_id} with token {token} and user data {raw_user_data}")
-#     return default_user
+# OAuth callback for authentication
+# This function is called when the user successfully authenticates with the OAuth provider.
+@cl.oauth_callback
+async def oauth_callback(
+    provider_id: str,
+    token: str,
+    raw_user_data: Dict[str, str],
+    default_user: cl.User,
+) -> Optional[cl.User]:
+    print(f"OAuth callback for provider {provider_id}")
+    default_user.identifier = raw_user_data["mail"]
+    default_user.display_name = raw_user_data["displayName"]
+    default_user.metadata["user_id"] = raw_user_data["id"]
+    default_user.metadata["first_name"] = raw_user_data["givenName"]
+    default_user.metadata["job_title"] = raw_user_data["jobTitle"]
+    default_user.metadata["office_location"] = raw_user_data["officeLocation"]
+    return default_user
 
-
+# Function to handle chat start event
+# This function is called when a new chat session starts.
 @cl.on_chat_start  # type: ignore
 async def start_chat() -> None:
-    load_dotenv(override=True)
     # Termination condition.
     text_mention_termination = TextMentionTermination("TERMINATE")
     max_messages_termination = MaxMessageTermination(max_messages=25)
@@ -40,7 +43,7 @@ async def start_chat() -> None:
     # Chain the assistant, critic and user agents using RoundRobinGroupChat.
     group_chat = RoundRobinGroupChat(
         participants=get_participants(),
-        max_turns=3,
+        max_turns=6,
         termination_condition=termination)
 
     selector_group_chat = SelectorGroupChat(
@@ -82,28 +85,27 @@ async def start_chat() -> None:
     # cl.user_session.set("team", selector_group_chat)  # type: ignore
 
 
+# Function to suggest starters
+# This function is called to suggest starter messages for the user.
 @cl.set_starters  # type: ignore
 async def set_starts() -> List[cl.Starter]:
     return [
         cl.Starter(
-            label="Azure App Modernization",
-            message="Explain the benefits of modernizing applications using Azure services.",
+            label="AI Assistant",
+            message="Design an AI assistant with frontend, backend, and database integration.",
         ),
         cl.Starter(
-            label="Azure AI Benefits",
-            message="Describe how Azure AI can be used to enhance business processes.",
+            label="Data Analysis Bot",
+            message="Create a bot to analyze and visualize data trends.",
         ),
         cl.Starter(
-            label="Azure DevOps",
-            message="Outline the steps to set up a CI/CD pipeline using Azure DevOps.",
-        ),
-        cl.Starter(
-            label="AI Agent",
-            message="Build an AI agent with a FE, BE, and a database.",
+            label="Customer Support Agent",
+            message="Develop an AI agent to handle customer support queries.",
         ),
     ]
 
-
+# Function to handle chat message event
+# This function is called when a new message is sent in the chat.
 @cl.on_message  # type: ignore
 async def chat(message: cl.Message) -> None:
     # Get the assistant agent from the user session.

@@ -1,15 +1,9 @@
 import os
-from dotenv import load_dotenv
 from autogen_ext.models.azure import AzureAIChatCompletionClient
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference import EmbeddingsClient
 
-
-# Load environment variables from .env file
-load_dotenv(override=True)
-
 # Create a model client for Azure OpenAI
-
 def create_model_client(
     model_name: str,
     json_output: bool = False,

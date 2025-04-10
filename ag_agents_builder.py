@@ -1,8 +1,8 @@
 from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
-from model_provider import create_model_client
+from ag_model_builder import create_model_client
 from autogen_core import CancellationToken
 import chainlit as cl
-from tools import generate_mermaid_diagram, get_date
+from ag_tools_builder import generate_mermaid_diagram, get_date
 
 
 async def user_input_func(prompt: str, cancellation_token: CancellationToken | None = None) -> str:
@@ -169,10 +169,10 @@ def get_participants() -> list[str]:
     return [
         questioner_agent,
         user_input_agent,
-        # architect_agent,
-        # diagram_agent,
-        # illustrator_agent,
-        # user_approval_agent
+        architect_agent,
+        diagram_agent,
+        illustrator_agent,
+        user_approval_agent
 
         # calendar_agent,
         # user_approval_agent,
