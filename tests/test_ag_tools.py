@@ -6,7 +6,7 @@ import unittest
 import os
 import asyncio
 from unittest.mock import patch, MagicMock
-from src.tools import generate_mermaid_diagram, generate_mermaid_diagram, encode_base64
+from ag_tools_builder import generate_mermaid_diagram, generate_mermaid_diagram, encode_base64
 
 class TestGenerateMermaidDiagram(unittest.TestCase):
     def setUp(self):

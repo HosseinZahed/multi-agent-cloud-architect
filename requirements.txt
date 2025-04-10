@@ -7,3 +7,5 @@ rich
 ipykernel
 markitdown[all]
 chromadb
+semantic-kernel[all]
+openai

@@ -1,14 +1,12 @@
 from autogen_core.models import UserMessage
 import unittest
 import asyncio
-import sys
-sys.path.append('../')
 
 
 class TestModelClient(unittest.TestCase):
 
     def setUp(self):
-        from src.model_provider import create_model_client
+        from ag_model_builder import create_model_client
         # Create a model client for each test
         self.model_client = create_model_client("gpt-4o")
         self.loop = asyncio.get_event_loop()
