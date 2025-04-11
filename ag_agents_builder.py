@@ -103,6 +103,7 @@ def get_participants() -> list[str]:
             3. Provide links to relevant Azure documentation and resources for further guidance.
             
             Keep responses clear, concise, and actionable while following Azure architectural best practices.
+            Add Emojis to make the response more engaging and visually appealing.
         """,
     )
 
